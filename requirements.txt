@@ -1,0 +1,15 @@
+streamlit
+python-dotenv
+pypdf
+pymupdf
+chromadb
+langchain
+langchain-community
+langchain-openai
+langchain-google-genai
+openai
+tiktoken
+sentence-transformers
+torch
+google-genai
+rank-bm25
