@@ -88,7 +88,21 @@ def get_genai_client():
     if _genai_client is None:
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
-            raise ValueError("Không tìm thấy GOOGLE_API_KEY trong file .env")
+            # Thử tìm trong streamlit secrets
+            try:
+                import streamlit as st
+                if "GOOGLE_API_KEY" in st.secrets:
+                    api_key = st.secrets["GOOGLE_API_KEY"]
+            except Exception:
+                pass
+        
+        if not api_key:
+            raise ValueError(
+                "Không tìm thấy GOOGLE_API_KEY. "
+                "Nếu chạy local, hãy cấu hình trong file .env. "
+                "Nếu chạy trên Streamlit Cloud, hãy cấu hình trong phần App Settings -> Secrets bằng cú pháp:\n"
+                "GOOGLE_API_KEY = \"your_api_key_here\""
+            )
         _genai_client = genai.Client(api_key=api_key)
     return _genai_client
 
