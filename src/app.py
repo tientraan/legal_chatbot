@@ -1,5 +1,11 @@
-import os
 import sys
+try:
+    import pysqlite3
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
+import os
 import glob
 from pathlib import Path
 
@@ -210,6 +216,24 @@ if vectordb is not None:
         num_chunks = vectordb._collection.count()
     except Exception:
         num_chunks = 0
+
+# Tự động nạp dữ liệu nếu chưa có cơ sở dữ liệu hoặc trống (khi chạy lần đầu trên Cloud)
+if num_chunks == 0 and num_docs > 0:
+    st.info("Cơ sở dữ liệu trống hoặc chưa được nạp. Đang tự động nạp và phân mảnh dữ liệu (ingestion)...")
+    try:
+        processed_docs, processed_chunks = run_ingestion(DATA_DIR, DB_DIR)
+        
+        # Reset biến toàn cục để load lại database mới
+        from src import rag
+        rag._vectordb = None
+        
+        vectordb = get_vectordb()
+        if vectordb is not None:
+            num_chunks = vectordb._collection.count()
+            
+        st.success(f"Tự động nạp dữ liệu thành công! Đã xử lý {processed_docs} tài liệu thành {processed_chunks} chunks.")
+    except Exception as e:
+        st.error(f"Lỗi khi tự động nạp dữ liệu: {str(e)}")
 
 # --- SIDEBAR ---
 with st.sidebar:
