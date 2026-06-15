@@ -249,27 +249,17 @@ def ask(question: str) -> tuple[str, list[Document]]:
         context_parts.append(part)
     context_str = "\n\n".join(context_parts)
 
-    # 5. Xây dựng Prompt chặt chẽ theo yêu cầu
-    prompt = f"""
-Bạn là chuyên gia pháp luật y tế Việt Nam.
+    # 5. Thiết lập System Instruction và Prompt
+    system_instruction = """Bạn là trợ lý ảo chuyên gia về pháp luật y tế Việt Nam. Nhiệm vụ của bạn là trả lời các câu hỏi dựa trên các tài liệu luật được cung cấp.
+Hãy tuân thủ nghiêm ngặt các nguyên tắc sau:
+1. Chỉ sử dụng thông tin có trong phần "VĂN BẢN LUẬT CUNG CẤP" được gửi kèm. Tuyệt đối không tự suy diễn hoặc dùng kiến thức bên ngoài.
+2. Trả lời chi tiết, rõ ràng, toàn diện và ĐẦY ĐỦ nhất có thể. Không được tóm tắt ngắn gọn làm mất hoặc giảm thiểu thông tin chi tiết.
+3. Khi người dùng hỏi về một khái niệm, đối tượng, quyền, nghĩa vụ, điều kiện, trường hợp hoặc hành vi bị cấm, hãy trích xuất và liệt kê toàn bộ các điều khoản, các điểm và thông tin liên quan trực tiếp lẫn gián tiếp xuất hiện trong văn bản tham khảo.
+4. Trình bày câu trả lời rõ ràng bằng tiếng Việt, phân tách rõ ràng các phần bằng tiêu đề, danh sách gạch đầu dòng hoặc đánh số. Nêu cụ thể điều, khoản, điểm của luật tương ứng.
+5. Luôn ghi rõ nguồn trích dẫn cụ thể bao gồm tên file PDF và số trang ở cuối mỗi phần thông tin hoặc cuối câu trả lời.
+6. Nếu trong tài liệu không có bất kỳ thông tin nào để trả lời câu hỏi, hãy trả lời chính xác câu: "Tôi chưa tìm thấy căn cứ trong dữ liệu đã nạp."."""
 
-Chỉ sử dụng thông tin trong phần "VĂN BẢN LUẬT CUNG CẤP".
-Không dùng kiến thức bên ngoài.
-
-Nếu câu hỏi hỏi về:
-- đối tượng
-- quyền
-- nghĩa vụ
-- điều kiện
-- trường hợp
-- hành vi bị cấm
-
-thì phải liệt kê ĐẦY ĐỦ tất cả các ý tìm thấy trong văn bản.
-Không được chỉ trả lời ý đầu tiên.
-Không được tóm tắt quá ngắn.
-
-Nếu không tìm thấy căn cứ phù hợp, trả lời:
-"Tôi chưa tìm thấy căn cứ trong dữ liệu đã nạp."
+    prompt = f"""Dưới đây là các tài liệu luật liên quan để tham khảo:
 
 VĂN BẢN LUẬT CUNG CẤP:
 {context_str}
@@ -277,15 +267,7 @@ VĂN BẢN LUẬT CUNG CẤP:
 CÂU HỎI:
 {question}
 
-YÊU CẦU TRẢ LỜI:
-- Trả lời bằng tiếng Việt.
-- Liệt kê đầy đủ theo gạch đầu dòng hoặc đánh số.
-- Nêu rõ điều, khoản nếu có.
-- Nêu nguồn file PDF và số trang.
-- Không bịa thông tin.
-
-TRẢ LỜI:
-"""
+TRẢ LỜI:"""
 
     # 6. Gọi LLM
     try:
@@ -295,7 +277,8 @@ TRẢ LỜI:
             model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
-                temperature=0.0
+                temperature=0.0,
+                system_instruction=system_instruction
             )
         )
         answer = response.text
