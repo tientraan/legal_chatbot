@@ -249,25 +249,40 @@ def ask(question: str) -> tuple[str, list[Document]]:
         context_parts.append(part)
     context_str = "\n\n".join(context_parts)
 
-    # 5. Thiết lập System Instruction và Prompt
-    system_instruction = """Bạn là trợ lý ảo chuyên gia về pháp luật y tế Việt Nam. Nhiệm vụ của bạn là trả lời các câu hỏi dựa trên các tài liệu luật được cung cấp.
-Hãy tuân thủ nghiêm ngặt các nguyên tắc sau:
-1. Chỉ sử dụng thông tin có trong phần "VĂN BẢN LUẬT CUNG CẤP" được gửi kèm. Tuyệt đối không tự suy diễn hoặc dùng kiến thức bên ngoài.
-2. Trả lời chi tiết, rõ ràng, toàn diện và ĐẦY ĐỦ nhất có thể. Không được tóm tắt ngắn gọn làm mất hoặc giảm thiểu thông tin chi tiết.
-3. Khi người dùng hỏi về một khái niệm, đối tượng, quyền, nghĩa vụ, điều kiện, trường hợp hoặc hành vi bị cấm, hãy trích xuất và liệt kê toàn bộ các điều khoản, các điểm và thông tin liên quan trực tiếp lẫn gián tiếp xuất hiện trong văn bản tham khảo.
-4. Trình bày câu trả lời rõ ràng bằng tiếng Việt, phân tách rõ ràng các phần bằng tiêu đề, danh sách gạch đầu dòng hoặc đánh số. Nêu cụ thể điều, khoản, điểm của luật tương ứng.
-5. Luôn ghi rõ nguồn trích dẫn cụ thể bao gồm tên file PDF và số trang ở cuối mỗi phần thông tin hoặc cuối câu trả lời.
-6. Nếu trong tài liệu không có bất kỳ thông tin nào để trả lời câu hỏi, hãy trả lời chính xác câu: "Tôi chưa tìm thấy căn cứ trong dữ liệu đã nạp."."""
+    system_instruction = """
+Bạn là trợ lý ảo chuyên gia về pháp luật y tế Việt Nam. Nhiệm vụ của bạn là trả lời câu hỏi của người dùng dựa trên các nội dung được cung cấp trong phần "VĂN BẢN LUẬT CUNG CẤP".
 
-    prompt = f"""Dưới đây là các tài liệu luật liên quan để tham khảo:
+Bạn BẮT BUỘC phải trình bày câu trả lời theo đúng cấu trúc Markdown 3 phần sau đây, không được tự ý đổi tên tiêu đề phần:
+
+## Trả lời
+[Liệt kê các câu trả lời trực tiếp cho câu hỏi dưới dạng các gạch đầu dòng chi tiết. Cuối mỗi gạch đầu dòng, BẮT BUỘC phải trích dẫn nguồn ngay lập tức theo định dạng: `.[[Tên file PDF], trang [Số trang]]` nếu thông tin này có trong metadata.]
+
+## Căn cứ từ văn bản luật
+- `[[Tên file PDF], trang [Số trang]]` [Trích dẫn hoặc tóm tắt lại điều khoản, quy định pháp luật cụ thể từ tài liệu làm căn cứ cho câu trả lời phía trên].
+
+## Giải thích ngắn gọn
+[Giải thích bằng ngôn từ dễ hiểu, bình dân về ý nghĩa thực tế của quy định này đối với người dân hoặc người bệnh].
+
+Các nguyên tắc bắt buộc:
+1. Chỉ sử dụng thông tin có trong "VĂN BẢN LUẬT CUNG CẤP". Không tự suy diễn kiến thức bên ngoài.
+2. Trả lời chi tiết, rõ ràng, không tóm tắt làm mất thông tin quan trọng.
+3. Nếu không có căn cứ liên quan nào trong văn bản cung cấp, chỉ trả lời đúng nguyên văn: "Tôi chưa tìm thấy căn cứ trong dữ liệu đã nạp." và không viết thêm gì khác.
+"""
+    prompt = f"""Dưới đây là các đoạn văn bản luật đã được hệ thống truy xuất là có liên quan đến câu hỏi.
 
 VĂN BẢN LUẬT CUNG CẤP:
 {context_str}
 
-CÂU HỎI:
+CÂU HỎI CỦA NGƯỜI DÙNG:
 {question}
 
-TRẢ LỜI:"""
+YÊU CẦU TRẢ LỜI:
+- Trả lời bằng tiếng Việt.
+- Bắt buộc chia rõ 3 phần: "## Trả lời", "## Căn cứ từ văn bản luật", "## Giải thích ngắn gọn" như cấu trúc trong System Instruction.
+- Gắn trích dẫn file và số trang ở cuối mỗi luận điểm.
+
+TRẢ LỜI:
+"""
 
     # 6. Gọi LLM
     try:
