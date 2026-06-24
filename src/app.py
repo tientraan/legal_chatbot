@@ -289,14 +289,26 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
         
+        # Gợi ý nếu không tìm thấy căn cứ
+        if message["role"] == "assistant" and "Tôi chưa tìm thấy căn cứ" in message["content"]:
+            st.info("💡 **Gợi ý**: Có thể dữ liệu chưa được ingest hoặc câu hỏi chưa khớp. Hãy kiểm tra lại dữ liệu đã nạp hoặc thử lại câu hỏi khác.")
+        
         # Nếu có nguồn tham khảo đi kèm, hiển thị dạng expander đẹp mắt
         if message["role"] == "assistant" and "sources" in message and message["sources"]:
             with st.expander("📖 Xem căn cứ và nguồn luật trích dẫn"):
                 st.markdown("<div class='sources-title'>Các đoạn luật liên quan được tìm thấy:</div>", unsafe_allow_html=True)
-                for i, doc in enumerate(message["sources"], 1):
+                for i, doc in enumerate(message["sources"], start=1):
                     source_file = doc.metadata.get("source", "Không rõ nguồn")
                     page_num = doc.metadata.get("page", "Không rõ trang")
-                    st.markdown(f"<span class='source-item'>📄 <b>{source_file}</b> - Trang {page_num}</span>", unsafe_allow_html=True)
+                    law_name = doc.metadata.get("law_name", "Không rõ luật")
+                    article = doc.metadata.get("article", "")
+                    art_title = doc.metadata.get("article_title", "")
+                    
+                    title_part = f" - <b>{article}</b>" if article else ""
+                    if art_title:
+                        title_part += f": {art_title}"
+                        
+                    st.markdown(f"<span class='source-item'>📄 <b>{law_name}</b>{title_part} (Trang {page_num})</span>", unsafe_allow_html=True)
                     st.markdown(f"```text\n{doc.page_content}\n```")
 
 # Ô nhập câu hỏi từ người dùng
@@ -316,6 +328,10 @@ if question := st.chat_input("Nhập câu hỏi pháp lý của bạn ở đây.
         # Hiển thị câu trả lời
         response_placeholder.write(answer)
         
+        # Gợi ý nếu không tìm thấy căn cứ
+        if "Tôi chưa tìm thấy căn cứ" in answer:
+            st.info("💡 **Gợi ý**: Có thể dữ liệu chưa được ingest hoặc câu hỏi chưa khớp. Hãy kiểm tra lại dữ liệu đã nạp hoặc thử lại câu hỏi khác.")
+        
         # Hiển thị nguồn trích dẫn
         if retrieved_docs:
             with st.expander("📖 Xem căn cứ và nguồn luật trích dẫn"):
@@ -323,7 +339,15 @@ if question := st.chat_input("Nhập câu hỏi pháp lý của bạn ở đây.
                 for i, doc in enumerate(retrieved_docs, start=1):
                     source_file = doc.metadata.get("source", "Không rõ nguồn")
                     page_num = doc.metadata.get("page", "Không rõ trang")
-                    st.markdown(f"<span class='source-item'>📄 <b>{source_file}</b> - Trang {page_num}</span>", unsafe_allow_html=True)
+                    law_name = doc.metadata.get("law_name", "Không rõ luật")
+                    article = doc.metadata.get("article", "")
+                    art_title = doc.metadata.get("article_title", "")
+                    
+                    title_part = f" - <b>{article}</b>" if article else ""
+                    if art_title:
+                        title_part += f": {art_title}"
+                        
+                    st.markdown(f"<span class='source-item'>📄 <b>{law_name}</b>{title_part} (Trang {page_num})</span>", unsafe_allow_html=True)
                     st.markdown(f"```text\n{doc.page_content}\n```")
                     
         # Lưu vào lịch sử chat
