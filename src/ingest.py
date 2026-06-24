@@ -255,10 +255,12 @@ def run_ingestion(data_dir: Path = DATA_DIR, db_dir: Path = DB_DIR) -> tuple[int
     # 5. Lưu vào ChromaDB
     logger.info(f"Đang lưu {len(chunks)} chunks vào ChromaDB tại {db_dir}...")
     try:
+        import chromadb
+        client = chromadb.PersistentClient(path=str(db_dir.resolve()))
         vectordb = Chroma.from_documents(
             documents=chunks,
             embedding=embeddings,
-            persist_directory=str(db_dir)
+            client=client
         )
         logger.info("Hoàn thành nạp dữ liệu và lưu trữ vào database thành công.")
     except Exception as e:

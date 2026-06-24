@@ -76,9 +76,10 @@ def get_vectordb():
         if not DB_DIR.exists():
             logger.warning(f"Thư mục database {DB_DIR} không tồn tại. Vui lòng chạy ingest dữ liệu trước.")
             return None
-        logger.info(f"Đang tải ChromaDB từ {DB_DIR}")
+        import chromadb
+        client = chromadb.PersistentClient(path=str(DB_DIR.resolve()))
         _vectordb = Chroma(
-            persist_directory=str(DB_DIR),
+            client=client,
             embedding_function=get_embeddings()
         )
     return _vectordb
